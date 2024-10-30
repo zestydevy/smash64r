@@ -166,3 +166,48 @@ extern "C" void recomp_set_right_analog_suppressed(uint8_t* rdram, recomp_contex
 
     recomp::set_right_analog_suppressed(suppressed);
 }
+
+extern "C" void __osSetWatchLo_recomp(uint8_t * rdram, recomp_context * ctx) {
+    // ..
+}
+
+extern "C" void __f_to_ll_recomp(uint8_t * rdram, recomp_context * ctx) {
+    int64_t ret = (int64_t)ctx->f12.fl;
+
+    ctx->r2 = (int32_t)(ret >> 32);
+    ctx->r3 = (int32_t)(ret >> 0);
+}
+
+extern "C" void __ull_rshift_recomp(uint8_t * rdram, recomp_context * ctx) {
+    uint64_t a = (ctx->r4 << 32) | ((ctx->r5 << 0) & 0xFFFFFFFFu);
+    uint64_t b = (ctx->r6 << 32) | ((ctx->r7 << 0) & 0xFFFFFFFFu);
+    uint64_t ret = a >> b;
+
+    ctx->r2 = (int32_t)(ret >> 32);
+    ctx->r3 = (int32_t)(ret >> 0);
+}
+
+extern "C" void __ll_lshift_recomp(uint8_t * rdram, recomp_context * ctx) {
+    uint64_t a = (ctx->r4 << 32) | ((ctx->r5 << 0) & 0xFFFFFFFFu);
+    uint64_t b = (ctx->r6 << 32) | ((ctx->r7 << 0) & 0xFFFFFFFFu);
+    uint64_t ret = a << b;
+
+    ctx->r2 = (int32_t)(ret >> 32);
+    ctx->r3 = (int32_t)(ret >> 0);
+}
+
+extern "C" void __ll_to_f_recomp(uint8_t * rdram, recomp_context * ctx) {
+    int64_t a = (ctx->r4 << 32) | ((ctx->r5 << 0) & 0xFFFFFFFFu);
+    float ret = (float)a;
+
+    ctx->f0.fl = ret;
+}
+
+extern "C" void __ll_rem_recomp(uint8_t * rdram, recomp_context * ctx) {
+    uint64_t a = (ctx->r4 << 32) | ((ctx->r5 << 0) & 0xFFFFFFFFu);
+    int64_t b = (ctx->r6 << 32) | ((ctx->r7 << 0) & 0xFFFFFFFFu);
+    int64_t ret = a % b;
+
+    ctx->r2 = (int32_t)(ret >> 32);
+    ctx->r3 = (int32_t)(ret >> 0);
+}
