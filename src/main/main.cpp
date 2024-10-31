@@ -95,16 +95,17 @@ bool SetImageAsIcon(const char* filename, SDL_Window* window)
     SDL_Surface* surface = nullptr;
     if (data != nullptr) {
         surface = SDL_CreateRGBSurfaceFrom(data, width, height, 32, pitch, Rmask, Gmask,
-                            Bmask, Amask);
+            Bmask, Amask);
     }
 
-    if (surface == nullptr) {   
+    if (surface == nullptr) {
         if (data != nullptr) {
             stbi_image_free(data);
         }
         return false;
-	} else {
-        SDL_SetWindowIcon(window,surface);
+    }
+    else {
+        SDL_SetWindowIcon(window, surface);
         SDL_FreeSurface(surface);
         stbi_image_free(data);
         return true;
@@ -115,13 +116,14 @@ bool SetImageAsIcon(const char* filename, SDL_Window* window)
 SDL_Window* window;
 
 ultramodern::renderer::WindowHandle create_window(ultramodern::gfx_callbacks_t::gfx_data_t) {
-    window = SDL_CreateWindow("Zelda 64: Recompiled", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 960, SDL_WINDOW_RESIZABLE );
+    window = SDL_CreateWindow("Super Smash Bros: Recompiled", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 960, SDL_WINDOW_RESIZABLE);
 #if defined(__linux__)
-    SetImageAsIcon("icons/512.png",window);
+    SetImageAsIcon("icons/512.png", window);
     if (ultramodern::renderer::get_graphics_config().wm_option == ultramodern::renderer::WindowMode::Fullscreen) { // TODO: Remove once RT64 gets native fullscreen support on Linux
-        SDL_SetWindowFullscreen(window,SDL_WINDOW_FULLSCREEN_DESKTOP);
-    } else {
-        SDL_SetWindowFullscreen(window,0);
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    }
+    else {
+        SDL_SetWindowFullscreen(window, 0);
     }
 #endif
 
@@ -175,7 +177,7 @@ void queue_samples(int16_t* audio_data, size_t sample_count) {
     // Buffer for holding the output of swapping the audio channels. This is reused across
     // calls to reduce runtime allocations.
     static std::vector<float> swap_buffer;
-    static std::array<float, duplicated_input_frames * input_channels> duplicated_sample_buffer;
+    static std::array<float, duplicated_input_frames* input_channels> duplicated_sample_buffer;
 
     // Make sure the swap buffer is large enough to hold the audio data, including any extra space needed for resampling.
     size_t resampled_sample_count = sample_count + duplicated_input_frames * input_channels;
@@ -183,7 +185,7 @@ void queue_samples(int16_t* audio_data, size_t sample_count) {
     if (max_sample_count > swap_buffer.size()) {
         swap_buffer.resize(max_sample_count);
     }
-    
+
     // Copy the duplicated frames from last chunk into this chunk
     for (size_t i = 0; i < duplicated_input_frames * input_channels; i++) {
         swap_buffer[i] = duplicated_sample_buffer[i];
@@ -196,15 +198,15 @@ void queue_samples(int16_t* audio_data, size_t sample_count) {
         swap_buffer[i + 0 + duplicated_input_frames * input_channels] = audio_data[i + 1] * (0.5f / 32768.0f) * cur_main_volume;
         swap_buffer[i + 1 + duplicated_input_frames * input_channels] = audio_data[i + 0] * (0.5f / 32768.0f) * cur_main_volume;
     }
-    
+
     // TODO handle cases where a chunk is smaller than the duplicated frame count.
-    assert(sample_count > duplicated_input_frames * input_channels);
+    // assert(sample_count > duplicated_input_frames * input_channels);
 
     // Copy the last converted samples into the duplicated sample buffer to reuse in resampling the next queued chunk.
     for (size_t i = 0; i < duplicated_input_frames * input_channels; i++) {
         duplicated_sample_buffer[i] = swap_buffer[i + sample_count];
     }
-    
+
     audio_convert.buf = reinterpret_cast<Uint8*>(swap_buffer.data());
     audio_convert.len = (sample_count + duplicated_input_frames * input_channels) * sizeof(swap_buffer[0]);
 
@@ -273,7 +275,7 @@ void update_audio_converter() {
 
 void set_frequency(uint32_t freq) {
     sample_rate = freq;
-    
+
     update_audio_converter();
 }
 
@@ -301,16 +303,12 @@ void reset_audio(uint32_t output_freq) {
     update_audio_converter();
 }
 
-extern RspUcodeFunc njpgdspMain;
-extern RspUcodeFunc aspMain;
+extern RspUcodeFunc n_aspMain;
 
 RspUcodeFunc* get_rsp_microcode(const OSTask* task) {
     switch (task->t.type) {
     case M_AUDTASK:
-        return aspMain;
-
-    case M_NJPEGTASK:
-        return njpgdspMain;
+        return n_aspMain;
 
     default:
         fprintf(stderr, "Unknown task: %" PRIu32 "\n", task->t.type);
@@ -324,10 +322,11 @@ gpr get_entrypoint_address();
 // array of supported GameEntry objects
 std::vector<recomp::GameEntry> supported_games = {
     {
-        .rom_hash = 0xEF18B4A9E2386169ULL,
-        .internal_name = "ZELDA MAJORA'S MASK",
-        .game_id = u8"mm.n64.us.1.0",
+        .rom_hash = 0x38912ac86097bfec,
+        .internal_name = "SMASH BROTHERS     ",
+        .game_id = u8"smashbrothers.us",
         .is_enabled = true,
+        .save_type = recomp::SaveType::Sram,
         .entrypoint_address = get_entrypoint_address(),
         .entrypoint = recomp_entrypoint,
     },
@@ -337,79 +336,51 @@ std::vector<recomp::GameEntry> supported_games = {
 namespace zelda64 {
     std::string get_game_thread_name(const OSThread* t) {
         std::string name = "[Game] ";
-
+        // name += std::to_string(t->id);
         switch (t->id) {
-            case 0:
-                switch (t->priority) {
-                    case 150:
-                        name += "PIMGR";
-                        break;
-
-                    case 254:
-                        name += "VIMGR";
-                        break;
-
-                    default:
-                        name += std::to_string(t->id);
-                        break;
-                }
+        case 0:
+            switch (t->priority) {
+            case 150:
+                name += "PIMGR";
                 break;
 
-            case 1:
-                name += "IDLE";
-                break;
-
-            case 2:
-                switch (t->priority) {
-                    case 5:
-                        name += "SLOWLY";
-                        break;
-
-                    case 127:
-                        name += "FAULT";
-                        break;
-
-                    default:
-                        name += std::to_string(t->id);
-                        break;
-                }
-                break;
-
-            case 3:
-                name += "MAIN";
-                break;
-
-            case 4:
-                name += "GRAPH";
-                break;
-
-            case 5:
-                name += "SCHED";
-                break;
-
-            case 7:
-                name += "PADMGR";
-                break;
-
-            case 10:
-                name += "AUDIOMGR";
-                break;
-
-            case 13:
-                name += "FLASHROM";
-                break;
-
-            case 18:
-                name += "DMAMGR";
-                break;
-
-            case 19:
-                name += "IRQMGR";
+            case 254:
+                name += "VIMGR";
                 break;
 
             default:
                 name += std::to_string(t->id);
                 break;
+            }
+            break;
+        case 1:
+            name += "IDLE";
+            break;
+        case 3:
+            name += "MAIN";
+            break;
+        case 4:
+            name += "AUD";
+            break;
+        case 5:
+            name += "GAMELOOP";
+            break;
+        case 6:
+            name += "CONT";
+            break;
+        case 8:
+            name += "FAULT";
+            break;
+        case 10000000 ... 20000000:
+            name = "[GObjProc] ";
+            name += std::to_string(t->id - 10000000);
+            break;
+        case 100000000:
+            name += "WEIRD";
+            break;
+        default:
+            name += std::to_string(t->id);
+            break;
         }
 
         return name;
@@ -497,7 +468,7 @@ bool preload_executable(PreloadContext& context) {
         context = {};
         return false;
     }
-    
+
     return true;
 }
 
@@ -619,7 +590,13 @@ int main(int argc, char** argv) {
         .get_game_thread_name = zelda64::get_game_thread_name,
     };
 
+    recomp::Version s;
+    s.major = 1;
+    s.minor = 0;
+    s.patch = 0;
+
     recomp::start(
+        s,
         {},
         rsp_callbacks,
         renderer_callbacks,
