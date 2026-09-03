@@ -144,7 +144,7 @@ ultramodern::renderer::WindowHandle create_window(ultramodern::gfx_callbacks_t::
         exit_error("Unsupported SDL2 video driver \"%s\". Only X11 is supported on Linux.\n", SDL_GetCurrentVideoDriver());
     }
 
-    return ultramodern::renderer::WindowHandle{ wmInfo.info.x11.display, wmInfo.info.x11.window };
+    return window;
 #else
     static_assert(false && "Unimplemented");
 #endif

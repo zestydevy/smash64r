@@ -203,8 +203,13 @@ zelda64::renderer::RT64Context::RT64Context(uint8_t* rdram, ultramodern::rendere
 #elif defined(__ANDROID__)
     assert(false && "Unimplemented");
 #elif defined(__linux__)
-    appCore.window.display = window_handle.display;
-    appCore.window.window = window_handle.window;
+    {
+        SDL_SysWMinfo wmInfo;
+        SDL_VERSION(&wmInfo.version);
+        SDL_GetWindowWMInfo(window_handle, &wmInfo);
+        appCore.window.display = wmInfo.info.x11.display;
+        appCore.window.window = wmInfo.info.x11.window;
+    }
 #elif defined(__APPLE__)
     appCore.window.window = window_handle.window;
     appCore.window.view = window_handle.view;
